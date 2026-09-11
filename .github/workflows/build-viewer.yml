@@ -1,0 +1,121 @@
+name: Build Castaway Paradise Viewer
+
+# Builds a Castaway-Paradise-branded, single-grid-locked Firestorm viewer for
+# Windows and Linux using Firestorm's own autobuild system. macOS is not built
+# here (needs a real Mac + Apple Developer signing) — see doc/building_macos.md
+# and build it locally following the same --opensim --singlegrid flags below.
+#
+# Trigger manually from the Actions tab so we control exactly when a ~1-3 hour
+# CI build kicks off, and so the login URI can be set/overridden per run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      login_uri:
+        description: "Castaway Paradise grid login URI (e.g. https://grid.castawayparadise.com/)"
+        required: true
+        default: "https://grid.castawayparadise.com/"
+      channel_name:
+        description: "Viewer channel name suffix (final channel = Firestorm-<this>)"
+        required: true
+        default: "CastawayParadise"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout viewer source
+        uses: actions/checkout@v4
+        with:
+          path: phoenix-firestorm
+
+      - name: Checkout build variables (sibling dir, required by autobuild)
+        uses: actions/checkout@v4
+        with:
+          repository: SaintedCoder/fs-build-variables
+          path: fs-build-variables
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install autobuild
+        run: pip install autobuild
+
+      - name: Install Cygwin
+        uses: cygwin/cygwin-install-action@v4
+        with:
+          packages: bash
+
+      - name: Configure
+        working-directory: phoenix-firestorm
+        shell: cmd
+        run: |
+          bash scripts/configure_firestorm.sh --config --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open
+
+        env:
+          AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}/fs-build-variables/variables
+
+      - name: Build
+        working-directory: phoenix-firestorm
+        shell: cmd
+        run: |
+          bash scripts/configure_firestorm.sh --build --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open
+        env:
+          AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}/fs-build-variables/variables
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: castaway-paradise-viewer-windows
+          path: phoenix-firestorm/build-vc-x86_64/newview/Release/*.exe
+          if-no-files-found: warn
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout viewer source
+        uses: actions/checkout@v4
+        with:
+          path: phoenix-firestorm
+
+      - name: Checkout build variables (sibling dir, required by autobuild)
+        uses: actions/checkout@v4
+        with:
+          repository: SaintedCoder/fs-build-variables
+          path: fs-build-variables
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libpulse-dev \
+            build-essential python3-pip git libssl-dev libxinerama-dev \
+            libxrandr-dev libfontconfig-dev libfreetype6-dev gcc-11 cmake
+
+      - name: Install autobuild
+        run: pip install autobuild
+
+      - name: Configure
+        working-directory: phoenix-firestorm
+        run: |
+          export AUTOBUILD_VARIABLES_FILE="$GITHUB_WORKSPACE/fs-build-variables/variables"
+          autobuild configure -A 64 -c ReleaseFS_open -- --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }}
+
+      - name: Build
+        working-directory: phoenix-firestorm
+        run: |
+          export AUTOBUILD_VARIABLES_FILE="$GITHUB_WORKSPACE/fs-build-variables/variables"
+          autobuild build -A 64 -c ReleaseFS_open --no-configure
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: castaway-paradise-viewer-linux
+          path: phoenix-firestorm/build-linux-x86_64/newview/*.tar.*
+          if-no-files-found: warn
