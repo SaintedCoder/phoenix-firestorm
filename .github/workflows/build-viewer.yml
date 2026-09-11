@@ -52,7 +52,7 @@ jobs:
         working-directory: phoenix-firestorm
         shell: cmd
         run: |
-          bash scripts/configure_firestorm.sh --config --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open
+          bash scripts/configure_firestorm.sh --config --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open --platform windows
 
         env:
           AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}/fs-build-variables/variables
@@ -61,7 +61,7 @@ jobs:
         working-directory: phoenix-firestorm
         shell: cmd
         run: |
-          bash scripts/configure_firestorm.sh --build --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open
+          bash scripts/configure_firestorm.sh --build --version --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -A 64 -c ReleaseFS_open --platform windows
         env:
           AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}/fs-build-variables/variables
 
