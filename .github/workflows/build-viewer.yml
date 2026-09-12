@@ -52,7 +52,7 @@ jobs:
         working-directory: phoenix-firestorm
         shell: cmd
         run: |
-                    autobuild configure -A 64 -c ReleaseFS_open -- --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }} -DCMAKE_CXX_STANDARD=17
+                                        autobuild configure -A 64 -c ReleaseFS_open -- --opensim --singlegrid "${{ github.event.inputs.login_uri }}" --chan ${{ github.event.inputs.channel_name }}
 
         env:
           AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}/fs-build-variables/variables
