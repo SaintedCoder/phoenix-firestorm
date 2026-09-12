@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: castaway-paradise-viewer-windows
-          path: phoenix-firestorm/build-vc-x86_64/newview/Release/*.exe
+                    path: phoenix-firestorm/build-vc170-64/newview/Release/*.exe
           if-no-files-found: warn
 
   build-linux:
