@@ -1,0 +1,53 @@
+name: Publish Viewer Release
+
+# Takes a completed build-viewer.yml run and publishes its artifacts (Windows
+# .exe / Linux .tar.*) as public downloadable assets on a GitHub Release, so
+# they can be linked from the homepage without going through GitHub's
+# authenticated Actions artifact storage.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run ID of the build-viewer.yml run to pull artifacts from"
+        required: true
+      tag:
+        description: "Release tag to create or update"
+        required: true
+        default: "viewer-latest"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: castaway-paradise-viewer-linux
+          run-id: ${{ github.event.inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: castaway-paradise-viewer-windows
+          run-id: ${{ github.event.inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: List downloaded files
+        run: ls -la dist || echo "no files downloaded"
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: Castaway Paradise Viewer (${{ github.event.inputs.tag }})
+          files: dist/**
+          fail_on_unmatched_files: false
